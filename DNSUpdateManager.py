@@ -1,15 +1,18 @@
 import csv
 import logging
+import os
+
 import requests
 import urllib3
-urllib3.disable_warnings()
 
+from google.cloud import storage
 from Lib.consts import DNS_GCP_BUCKET_CRED_FILE_PATH, DNS_FEED_BUCKET_NAME, DNS_BLOCK_NAMES, \
     API_BULK_DELETE_DNS_LISTS_PATH, ENV_UPDATE_CONFIGURATION_FILE, API_GET_DNS_LISTS_PATH, API_CREATE_DNS_LIST_PATH, \
     API_UPDATE_DNS_LIST_PATH, GC_INTERNAL_HEADERS, DNS_LISTS_FILE_PATH, DNS_LISTS_FILE_NAME
 
+from oauth2client.client import GOOGLE_APPLICATION_CREDENTIALS
 
-# from google.cloud import storage
+urllib3.disable_warnings()
 
 logger = logging.getLogger()
 
@@ -29,6 +32,10 @@ def validate_ip(s):
     return True
 
 
+def clean_domain_name(name: str):
+    return name[:1] + name[1:].lower() if name != 'CNC' else name
+
+
 class DNSUpdateManager:
     def __init__(self):
         self.block_list_data = self.get_dns_feed_data_from_gcp_bucket()
@@ -40,7 +47,7 @@ class DNSUpdateManager:
     def get_domain_lists_from_env(self):
         headers = self.get_headers_with_token()
         logger.info("Getting lists from env")
-        full_url = self.env_url + API_GET_DNS_LISTS_PATH # urljoin(f"{self.env_url}", API_GET_DNS_LISTS_PATH)
+        full_url = self.env_url + API_GET_DNS_LISTS_PATH  # urljoin(f"{self.env_url}", API_GET_DNS_LISTS_PATH)
         response = requests.get(url=full_url, headers=headers, verify=False).json()
         lists = []
         #  check if the lists from env are the relevant lists (cnc / phishing / malware)
@@ -84,7 +91,7 @@ class DNSUpdateManager:
         for name in DNS_BLOCK_NAMES.keys():
             data["create_list"].append(
                 {
-                    "name": name,
+                    "name": clean_domain_name(name),
                     "type": "CUSTOM_BLOCKLIST",
                     "domains": domains_to_update[name]
                 }
@@ -105,7 +112,7 @@ class DNSUpdateManager:
             data['edit_list'].append(
                 {
                     "id": l['id'],
-                    "name": l['name'],
+                    "name": clean_domain_name(l['name']),
                     "domains": domains_to_update[l['name']],
                     "enabled": True
                 }
@@ -118,7 +125,8 @@ class DNSUpdateManager:
             if len(response['failed']) or len(response['missing']):
                 logger.error("Failed to update DNS lists")
                 raise RuntimeError(response)
-            logger.info(f"Status: Succeeded: {len(response['succeeded'])}, Failed:{len(response['failed'])}, Missing: {len(response['missing'])}")
+            logger.info(
+                f"Status: Succeeded: {len(response['succeeded'])}, Failed:{len(response['failed'])}, Missing: {len(response['missing'])}")
         except Exception as e:
             raise RuntimeError(e)
         return
@@ -184,57 +192,54 @@ class DNSUpdateManager:
         return block_lists_to_update
 
     def get_dns_feed_data_from_gcp_bucket(self):
-        blocks_list_data = {key: [] for key in DNS_BLOCK_NAMES.keys()}
-        with open(DNS_LISTS_FILE_PATH + DNS_LISTS_FILE_NAME, 'r', newline='') as file:
-            reader = csv.reader(file)
-            devnull = next(reader)  # first row is column names
-            for i in reader:
-                if not i:
-                    continue
-                    #  i[4] is the domain "list"/"category" (phishing, cnc, malware)
-                    #  i[0] is the full domain address
-                blocks_list_data[i[4]].append(i[0].rstrip("."))
-        return blocks_list_data
-
-        #  until golaj is coming back, ^^ manually downloading the lists.
-        #  todo: connect code to gcp bucket and download automatically
-        #
-        # logger.info("Getting all dns feed details from gcp bucket")
-        # if not os.path.exists(DNS_GCP_BUCKET_CRED_FILE_PATH):
-        #     raise RuntimeError("Not found gcp bucket file credentials %s" % DNS_GCP_BUCKET_CRED_FILE_PATH)
-        # try:
-        #     storage_client = storage.Client.from_service_account_json(DNS_GCP_BUCKET_CRED_FILE_PATH)
-        #     bucket = storage_client.get_bucket(DNS_FEED_BUCKET_NAME)
-        # except Exception as e:
-        #     raise RuntimeError("Failed to connect to dns feed bucket")
-        #
-        # blocks_list_data = {}
-        # for block_list_name in DNS_BLOCK_NAMES.keys():
-        #     expected_block_file_path = os.path.join(block_list_name, '%s.txt' % block_list_name)
-        #     block_blob = bucket.get_blob(expected_block_file_path)
-        #     if not block_blob:
-        #         continue
-        #
-        #     logger.info("Found dns feed block file - %s" % expected_block_file_path)
-        #     local_file_name = "%s.txt" % block_list_name
-        #     blocks_list_data[block_list_name] = []
-        #     try:
-        #         if os.path.exists(local_file_name):
-        #             os.remove(local_file_name)
-        #         block_blob.download_to_filename(local_file_name)
-        #         logger.info("Saved blob txt data in file %s" % local_file_name)
-        #         with open(local_file_name) as block_list_file:
-        #             for dns_line in block_list_file:
-        #                 if not validate_ip(dns_line):
-        #                     blocks_list_data[block_list_name].append(dns_line.strip())
-        #     finally:
-        #         local_file_path = os.path.join(os.path.dirname(__file__), local_file_name)
-        #         if os.path.exists(local_file_path):
-        #             logger.info("Removing local txt file %s" % local_file_path)
-        #             os.remove(local_file_path)
-        # logger.info("Collected data for blocks - %s" % str(blocks_list_data.keys()))
-        #
+        # blocks_list_data = {key: [] for key in DNS_BLOCK_NAMES.keys()}
+        # with open(DNS_LISTS_FILE_PATH + DNS_LISTS_FILE_NAME, 'r', newline='') as file:
+        #     reader = csv.reader(file)
+        #     devnull = next(reader)  # first row is column names
+        #     for i in reader:
+        #         if not i:
+        #             continue
+        #             #  i[4] is the domain "list"/"category" (phishing, cnc, malware)
+        #             #  i[0] is the full domain address
+        #         blocks_list_data[i[4]].append(i[0].rstrip("."))
         # return blocks_list_data
+
+        logger.info("Getting all dns feed details from gcp bucket")
+        if not os.path.exists(GOOGLE_APPLICATION_CREDENTIALS):
+            raise RuntimeError("Not found gcp bucket file credentials %s" % GOOGLE_APPLICATION_CREDENTIALS)
+        try:
+            storage_client = storage.Client.from_service_account_json(GOOGLE_APPLICATION_CREDENTIALS)
+            bucket = storage_client.get_bucket(DNS_FEED_BUCKET_NAME)
+        except Exception as e:
+            raise RuntimeError("Failed to connect to dns feed bucket")
+
+        blocks_list_data = {}
+        for block_list_name in DNS_BLOCK_NAMES.keys():
+            expected_block_file_path = os.path.join(block_list_name, '%s.txt' % block_list_name)
+            block_blob = bucket.get_blob(expected_block_file_path)
+            if not block_blob:
+                continue
+
+            logger.info("Found dns feed block file - %s" % expected_block_file_path)
+            local_file_name = "%s.txt" % block_list_name
+            blocks_list_data[block_list_name] = []
+            try:
+                if os.path.exists(local_file_name):
+                    os.remove(local_file_name)
+                block_blob.download_to_filename(local_file_name)
+                logger.info("Saved blob txt data in file %s" % local_file_name)
+                with open(local_file_name) as block_list_file:
+                    for dns_line in block_list_file:
+                        if not validate_ip(dns_line):
+                            blocks_list_data[block_list_name].append(dns_line.strip())
+            finally:
+                local_file_path = os.path.join(os.path.dirname(__file__), local_file_name)
+                if os.path.exists(local_file_path):
+                    logger.info("Removing local txt file %s" % local_file_path)
+                    os.remove(local_file_path)
+        logger.info("Collected data for blocks - %s" % str(blocks_list_data.keys()))
+
+        return blocks_list_data
 
     def delete_domains_lists(self, dns_objects_from_env):
         logger.info(f"Deleting existing DNS lists on env: {self.env_id}")
@@ -247,7 +252,8 @@ class DNSUpdateManager:
             if len(response['failed']) or len(response['missing']):
                 logger.error("Failed to delete DNS lists")
                 raise RuntimeError(response)
-            logger.info(f"Delete operation status: Succeeded: {len(response['succeeded'])}, Failed:{len(response['failed'])}, Missing: {len(response['missing'])}")
+            logger.info(
+                f"Delete operation status: Succeeded: {len(response['succeeded'])}, Failed:{len(response['failed'])}, Missing: {len(response['missing'])}")
         except Exception as e:
             raise RuntimeError(e)
         return

@@ -13,8 +13,6 @@ ENV_UPDATE_CONFIGURATION_FILE = "/root/DNSLists/config.yaml"
 
 GC_INTERNAL_HEADERS = {'Gc-Caller-Type': 'internal'}
 
-DNS_GCP_BUCKET_CRED_FILE_PATH = "/storage/cloud_keys/gcp/dns-feed-readonly.json"
-
 DNS_LISTS_FILE_PATH = '/root/DNSLists/DNSListsFromBucket/'
 
 DNS_LISTS_FILE_NAME = 'etp_threat_intel_dns_feedetp_threat_intel_top_domains-2023-03-06.csv'
