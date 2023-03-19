@@ -6,7 +6,7 @@ import yaml
 
 from datetime import datetime
 from pathlib import Path
-from Lib.consts import LOG_FILENAME, DNS_GCP_BUCKET_CRED_FILE_PATH, DNS_FEED_BUCKET_NAME, DNS_BLOCK_NAMES, \
+from Lib.consts import LOG_FILENAME, DNS_FEED_BUCKET_NAME, DNS_BLOCK_NAMES, \
     ENV_UPDATE_CONFIGURATION_FILE
 
 # Initiating the logger:
