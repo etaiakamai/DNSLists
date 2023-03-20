@@ -90,7 +90,7 @@ class DNSUpdateManager:
         for name in DNS_BLOCK_NAMES.keys():
             data["create_list"].append(
                 {
-                    "name": clean_domain_name(name),
+                    "name": DNS_BLOCK_NAMES[name],
                     "type": "CUSTOM_BLOCKLIST",
                     "domains": domains_to_update[name]
                 }
@@ -111,7 +111,7 @@ class DNSUpdateManager:
             data['edit_list'].append(
                 {
                     "id": l['id'],
-                    "name": clean_domain_name(l['name']),
+                    "name": l['name'],
                     "domains": domains_to_update[l['name']],
                     "enabled": True
                 }
