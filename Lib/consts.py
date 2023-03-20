@@ -13,6 +13,8 @@ ENV_UPDATE_CONFIGURATION_FILE = "/root/DNSLists/config.yaml"
 
 GC_INTERNAL_HEADERS = {'Gc-Caller-Type': 'internal'}
 
+GOOGLE_APPLICATION_CREDENTIALS = '/root/DNSLists/Lib/guardicore-27800953-34172acfd2c0.json'
+
 DNS_LISTS_FILE_PATH = '/root/DNSLists/DNSListsFromBucket/'
 
 DNS_LISTS_FILE_NAME = 'etp_threat_intel_dns_feedetp_threat_intel_top_domains-2023-03-06.csv'

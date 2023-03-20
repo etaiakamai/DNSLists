@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import sys
@@ -6,8 +5,7 @@ import yaml
 
 from datetime import datetime
 from pathlib import Path
-from Lib.consts import LOG_FILENAME, DNS_FEED_BUCKET_NAME, DNS_BLOCK_NAMES, \
-    ENV_UPDATE_CONFIGURATION_FILE
+from Lib.consts import LOG_FILENAME, ENV_UPDATE_CONFIGURATION_FILE
 
 # Initiating the logger:
 # When initiating the logger as done here, it allows global logging capabilities
