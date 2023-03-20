@@ -7,7 +7,7 @@ SCENRAIO_ID = "ui_update_dns_2"
 
 DNS_BLOCK_NAMES = {'CNC': 'CNC servers', 'MALWARE': 'Malware domains', 'PHISHING': 'Phishing sites'}
 
-DNS_FEED_BUCKET_NAME = "d75f5b5c60ea492485593d7819e7c0b0"
+DNS_FEED_BUCKET_NAME = "etp_threat_intel_dns_feed"
 
 ENV_UPDATE_CONFIGURATION_FILE = "/root/DNSLists/config.yaml"
 

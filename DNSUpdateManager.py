@@ -5,10 +5,11 @@ import os
 import requests
 import urllib3
 
+from datetime import datetime
 from google.cloud import storage
 from Lib.consts import DNS_FEED_BUCKET_NAME, DNS_BLOCK_NAMES, \
     API_BULK_DELETE_DNS_LISTS_PATH, API_GET_DNS_LISTS_PATH, API_CREATE_DNS_LIST_PATH, \
-    API_UPDATE_DNS_LIST_PATH, GOOGLE_APPLICATION_CREDENTIALS
+    API_UPDATE_DNS_LIST_PATH, GOOGLE_APPLICATION_CREDENTIALS, DNS_LISTS_FILE_PATH
 
 urllib3.disable_warnings()
 
@@ -211,31 +212,28 @@ class DNSUpdateManager:
         except Exception as e:
             raise RuntimeError("Failed to connect to dns feed bucket")
 
-        blocks_list_data = {}
-        for block_list_name in DNS_BLOCK_NAMES.keys():
-            expected_block_file_path = os.path.join(block_list_name, '%s.txt' % block_list_name)
-            block_blob = bucket.get_blob(expected_block_file_path)
-            if not block_blob:
-                continue
+        blocks_list_data = {key: [] for key in DNS_BLOCK_NAMES.keys()}
 
-            logger.info("Found dns feed block file - %s" % expected_block_file_path)
-            local_file_name = "%s.txt" % block_list_name
-            blocks_list_data[block_list_name] = []
-            try:
-                if os.path.exists(local_file_name):
-                    os.remove(local_file_name)
-                block_blob.download_to_filename(local_file_name)
-                logger.info("Saved blob txt data in file %s" % local_file_name)
-                with open(local_file_name) as block_list_file:
-                    for dns_line in block_list_file:
-                        if not validate_ip(dns_line):
-                            blocks_list_data[block_list_name].append(dns_line.strip())
-            finally:
-                local_file_path = os.path.join(os.path.dirname(__file__), local_file_name)
-                if os.path.exists(local_file_path):
-                    logger.info("Removing local txt file %s" % local_file_path)
-                    os.remove(local_file_path)
-        logger.info("Collected data for blocks - %s" % str(blocks_list_data.keys()))
+        blob = list(storage_client.list_blobs(DNS_FEED_BUCKET_NAME))[-1]  # getting the last item => most updated file
+
+        logger.info("Found dns feed file - %s" % blob)
+        cur_date = datetime.now().strftime("%d_%m_%Y")
+        local_file_name = os.path.join(DNS_LISTS_FILE_PATH, DNS_FEED_BUCKET_NAME, cur_date)
+
+        blob.download_to_filename(local_file_name)
+
+        with open(local_file_name, 'r', newline='') as f:
+            reader = csv.reader(f)
+            devnull = next(reader)
+            for line in reader:
+                if not line:
+                    continue
+                    #  i[4] is the domain "list"/"category" (phishing, cnc, malware)
+                    #  i[0] is the full domain address
+                blocks_list_data[line[4]].append(line[0].rstrip("."))
+
+        for category in blocks_list_data.keys():
+            logger.info("Collected %s items for %s " % (len(blocks_list_data), category))
 
         return blocks_list_data
 
