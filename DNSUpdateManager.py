@@ -92,7 +92,7 @@ class DNSUpdateManager:
                 {
                     "name": DNS_BLOCK_NAMES[name],
                     "type": "CUSTOM_BLOCKLIST",
-                    "domains": domains_to_update[name]
+                    "domains": domains_to_update[DNS_BLOCK_NAMES[name]]
                 }
             )
         headers = self.get_headers_with_token()
@@ -108,7 +108,8 @@ class DNSUpdateManager:
         logger.info(f"Updating Domain Lists")
         data = {"edit_list": []}
         for l in domain_lists_from_env:
-            key = (i for i in DNS_BLOCK_NAMES.keys() if DNS_BLOCK_NAMES[i] == l['name'])
+            key = l['name']
+            #key = (i for #i in DNS_BLOCK_NAMES.keys() if DNS_BLOCK_NAMES[i] == l['name'])
             data['edit_list'].append(
                 {
                     "id": l['id'],
@@ -172,7 +173,7 @@ class DNSUpdateManager:
             logger.warning(
                 f"Wanted DNS amount: {self.domain_amount}. Available domains: Phishing: {phishing_count}, CNC: {cnc_count}, Malware: {malware_count}")
 
-        block_lists_to_update = {key: [] for key in DNS_BLOCK_NAMES.keys()}
+        block_lists_to_update = {v: [] for v in DNS_BLOCK_NAMES.values()}
         for domain in self.block_list_data['PHISHING']:
             block_lists_to_update['PHISHING'].append(domain)
             phishing_count -= 1
