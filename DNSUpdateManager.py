@@ -51,7 +51,7 @@ class DNSUpdateManager:
         lists = []
         #  check if the lists from env are the relevant lists (cnc / phishing / malware)
         for l in response['objects']:
-            if l['name'] in (DNS_BLOCK_NAMES.keys()):
+            if l['name'] in (DNS_BLOCK_NAMES.values()):
                 lists.append(l)
         logger.info(f"Fetched {len(response['objects'])} lists")
         return lists
