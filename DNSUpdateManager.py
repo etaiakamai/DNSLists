@@ -108,11 +108,12 @@ class DNSUpdateManager:
         logger.info(f"Updating Domain Lists")
         data = {"edit_list": []}
         for l in domain_lists_from_env:
+            key = (i for i in DNS_BLOCK_NAMES.keys() if DNS_BLOCK_NAMES[i] == l['name'])
             data['edit_list'].append(
                 {
                     "id": l['id'],
                     "name": l['name'],
-                    "domains": domains_to_update[l['name']],
+                    "domains": domains_to_update[key],
                     "enabled": True
                 }
             )
