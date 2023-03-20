@@ -57,7 +57,7 @@ class DNSUpdateManager:
         return lists
 
     def get_token_from_mongo_placeholder(self):
-        return "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NzgxOTAzMzAsImlhdCI6MTY3ODEwMzkzMCwibmJmIjoxNjc4MTAzOTMwLCJpZGVudGl0eSI6ImFkbWluIiwicmFuZCI6IjY1Y2UxNmI4LWU2ZDctNGIwMy04NGE0LWM3MDY3NDJkOTg0YiJ9.A2UOPHqfASA04cFFlimgcDbSuODmeL-8TQlAUfAHnIQ"  # todo500
+        return "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2Nzk0MTM0NTIsImlhdCI6MTY3OTMyNzA1MiwibmJmIjoxNjc5MzI3MDUyLCJpZGVudGl0eSI6ImFkbWluIiwicmFuZCI6IjAwNTk2ODk5LTY0NmItNDE3Mi04NzE3LWNhNzcyYmMyYTM0ZiJ9.vW_mR_n_Z4q0CrwL3yBWw0MP3gRwd-fzbOPRfLjJddE"  # todo500
 
     def get_headers_with_token(self):
         return {"Content-Type": "application/json",
@@ -233,7 +233,7 @@ class DNSUpdateManager:
                 blocks_list_data[line[4]].append(line[0].rstrip("."))
 
         for category in blocks_list_data.keys():
-            logger.info("Collected %s items for %s " % (len(blocks_list_data), category))
+            logger.info("Collected %s items for %s " % (len(blocks_list_data[category]), category))
 
         return blocks_list_data
 
