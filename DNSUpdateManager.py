@@ -218,7 +218,7 @@ class DNSUpdateManager:
 
         logger.info("Found dns feed file - %s" % blob)
         cur_date = datetime.now().strftime("%d_%m_%Y")
-        local_file_name = os.path.join(DNS_LISTS_FILE_PATH, DNS_FEED_BUCKET_NAME, cur_date)
+        local_file_name = os.path.join(DNS_LISTS_FILE_PATH, DNS_FEED_BUCKET_NAME + cur_date)
 
         blob.download_to_filename(local_file_name)
 
