@@ -87,12 +87,12 @@ class DNSUpdateManager:
     def create_dns_lists(self, domains_to_update):
         logger.info("Creating Domain lists")
         data = {"create_list": []}
-        for name in DNS_BLOCK_NAMES.keys():
+        for name in DNS_BLOCK_NAMES.values():
             data["create_list"].append(
                 {
-                    "name": DNS_BLOCK_NAMES[name],
+                    "name": name,
                     "type": "CUSTOM_BLOCKLIST",
-                    "domains": domains_to_update[DNS_BLOCK_NAMES[name]]
+                    "domains": domains_to_update[name]
                 }
             )
         headers = self.get_headers_with_token()
@@ -108,13 +108,12 @@ class DNSUpdateManager:
         logger.info(f"Updating Domain Lists")
         data = {"edit_list": []}
         for l in domain_lists_from_env:
-            key = l['name']
-            #key = (i for #i in DNS_BLOCK_NAMES.keys() if DNS_BLOCK_NAMES[i] == l['name'])
+            name = l['name']
             data['edit_list'].append(
                 {
                     "id": l['id'],
-                    "name": l['name'],
-                    "domains": domains_to_update[key],
+                    "name": name,
+                    "domains": domains_to_update[name],
                     "enabled": True
                 }
             )
@@ -136,9 +135,9 @@ class DNSUpdateManager:
         third = int(self.domain_amount) / 3
         phishing_count, cnc_count, malware_count = third, third, third
         reached_phishing_limit, reached_cnc_limit, reached_malware_limit = False, False, False
-        phishing_domain_amount = len(self.block_list_data['PHISHING'])
-        cnc_domain_amount = len(self.block_list_data['CNC'])
-        malware_domain_amount = len(self.block_list_data['MALWARE'])
+        phishing_domain_amount = len(self.block_list_data[DNS_BLOCK_NAMES['PHISHING']])
+        cnc_domain_amount = len(self.block_list_data[DNS_BLOCK_NAMES['CNC']])
+        malware_domain_amount = len(self.block_list_data[DNS_BLOCK_NAMES['MALWARE']])
 
         if phishing_domain_amount < phishing_count:
             diff = phishing_count - phishing_domain_amount
@@ -174,18 +173,18 @@ class DNSUpdateManager:
                 f"Wanted DNS amount: {self.domain_amount}. Available domains: Phishing: {phishing_count}, CNC: {cnc_count}, Malware: {malware_count}")
 
         block_lists_to_update = {v: [] for v in DNS_BLOCK_NAMES.values()}
-        for domain in self.block_list_data['PHISHING']:
-            block_lists_to_update['PHISHING'].append(domain)
+        for domain in self.block_list_data[DNS_BLOCK_NAMES['PHISHING']]:
+            block_lists_to_update[DNS_BLOCK_NAMES['PHISHING']].append(domain)
             phishing_count -= 1
             if phishing_count <= 0:
                 break
-        for domain in self.block_list_data['CNC']:
-            block_lists_to_update['CNC'].append(domain)
+        for domain in self.block_list_data[DNS_BLOCK_NAMES['CNC']]:
+            block_lists_to_update[DNS_BLOCK_NAMES['CNC']].append(domain)
             cnc_count -= 1
             if cnc_count <= 0:
                 break
-        for domain in self.block_list_data['MALWARE']:
-            block_lists_to_update['MALWARE'].append(domain)
+        for domain in self.block_list_data[DNS_BLOCK_NAMES['MALWARE']]:
+            block_lists_to_update[DNS_BLOCK_NAMES['MALWARE']].append(domain)
             malware_count -= 1
             if malware_count <= 0:
                 break
@@ -214,7 +213,7 @@ class DNSUpdateManager:
         except Exception as e:
             raise RuntimeError("Failed to connect to dns feed bucket")
 
-        blocks_list_data = {key: [] for key in DNS_BLOCK_NAMES.keys()}
+        blocks_list_data = {v: [] for v in DNS_BLOCK_NAMES.values()}
 
         blob = list(storage_client.list_blobs(DNS_FEED_BUCKET_NAME))[-1]  # getting the last item => most updated file
 
@@ -232,7 +231,7 @@ class DNSUpdateManager:
                     continue
                     #  i[4] is the domain "list"/"category" (phishing, cnc, malware)
                     #  i[0] is the full domain address
-                blocks_list_data[line[4]].append(line[0].rstrip("."))
+                blocks_list_data[DNS_BLOCK_NAMES[line[4]]].append(line[0].rstrip("."))
 
         for category in blocks_list_data.keys():
             logger.info("Collected %s items for %s " % (len(blocks_list_data[category]), category))
