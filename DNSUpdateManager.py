@@ -60,7 +60,7 @@ class DNSUpdateManager:
         return lists
 
     def get_token_from_mongo_placeholder(self):
-        return "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2Nzk0MTM0NTIsImlhdCI6MTY3OTMyNzA1MiwibmJmIjoxNjc5MzI3MDUyLCJpZGVudGl0eSI6ImFkbWluIiwicmFuZCI6IjAwNTk2ODk5LTY0NmItNDE3Mi04NzE3LWNhNzcyYmMyYTM0ZiJ9.vW_mR_n_Z4q0CrwL3yBWw0MP3gRwd-fzbOPRfLjJddE"  # todo500
+        return "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODAxNzg4ODgsImlhdCI6MTY4MDA5MjQ4OCwibmJmIjoxNjgwMDkyNDg4LCJpZGVudGl0eSI6ImFkbWluIiwicmFuZCI6IjdlY2M2ZTA4LWY4OTktNGMwOS1iODcxLWMwYWM1MjI4NGUzNSJ9.Z4j0IysonJhI_PLvJCytXfZmSvEnaahOGc863819PXc"  # todo500
 
     def get_headers_with_token(self):
         return {"Content-Type": "application/json",
