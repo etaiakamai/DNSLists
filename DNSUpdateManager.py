@@ -37,14 +37,13 @@ def clean_domain_name(name: str):
 
 class DNSUpdateManager:
     def __init__(self):
+        cur_date = datetime.now().strftime("%d_%m_%Y")
+        self.local_feed_results_file_name = os.path.join(DNS_LISTS_FILE_PATH, DNS_FEED_BUCKET_NAME + cur_date)
         self.block_list_data = self.get_dns_feed_data_from_gcp_bucket()
         self.env_id = ""
         self.bearer_token = ""
         self.env_url = ""
         self.domain_amount = 0
-        cur_date = datetime.now().strftime("%d_%m_%Y")
-        self.local_feed_results_file_name = os.path.join(DNS_LISTS_FILE_PATH, DNS_FEED_BUCKET_NAME + cur_date)
-
 
     def get_domain_lists_from_env(self):
         headers = self.get_headers_with_token()
