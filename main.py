@@ -24,7 +24,7 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 logger = logging.getLogger()
 logging.basicConfig(
     filename=log_output_path,
-    level=logging.DEBUG,
+    level=logging.INFO,
     format=format_str)
 stdout_handler.setFormatter(formatter)
 logger.addHandler(stdout_handler)
@@ -47,8 +47,10 @@ if __name__ == "__main__":
     for line in config['envs']:
         env_id, domain_amount, env_url = line.split(',')
         logger.info(f"--- Initiating operation on env: {env_id}, domain_amount: {domain_amount} ---")
-        update_manager.run_dns_operation(env_id, int(domain_amount), env_url)
-        # except Exception as e:
-        #     logger.error(e)
-        logger.info(f">---------- Script done ----------<")
+        try:
+            update_manager.run_dns_operation(env_id, int(domain_amount), env_url)
+        except Exception as e:
+            logger.error(e)
 
+    update_manager.delete_feed_data()
+    logger.info(f">---------- Script done ----------<")

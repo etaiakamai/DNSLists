@@ -42,6 +42,9 @@ class DNSUpdateManager:
         self.bearer_token = ""
         self.env_url = ""
         self.domain_amount = 0
+        cur_date = datetime.now().strftime("%d_%m_%Y")
+        self.local_feed_results_file_name = os.path.join(DNS_LISTS_FILE_PATH, DNS_FEED_BUCKET_NAME + cur_date)
+
 
     def get_domain_lists_from_env(self):
         headers = self.get_headers_with_token()
@@ -218,12 +221,10 @@ class DNSUpdateManager:
         blob = list(storage_client.list_blobs(DNS_FEED_BUCKET_NAME))[-1]  # getting the last item => most updated file
 
         logger.info("Found dns feed file - %s" % blob)
-        cur_date = datetime.now().strftime("%d_%m_%Y")
-        local_file_name = os.path.join(DNS_LISTS_FILE_PATH, DNS_FEED_BUCKET_NAME + cur_date)
 
-        blob.download_to_filename(local_file_name)
+        blob.download_to_filename(self.local_feed_results_file_name)
 
-        with open(local_file_name, 'r', newline='') as f:
+        with open(self.local_feed_results_file_name, 'r', newline='') as f:
             reader = csv.reader(f)
             devnull = next(reader)
             for line in reader:
@@ -253,4 +254,11 @@ class DNSUpdateManager:
                 f"Delete operation status: Succeeded: {len(response['succeeded'])}, Failed:{len(response['failed'])}, Missing: {len(response['missing'])}")
         except Exception as e:
             raise RuntimeError(e)
+        return
+
+    def delete_feed_data(self):
+        if os.path.exists(self.local_feed_results_file_name):
+            os.remove(self.local_feed_results_file_name)
+        else:
+            logger.warning(f"Can't delete feed results from file: {self.local_feed_results_file_name} - does not exist")
         return
